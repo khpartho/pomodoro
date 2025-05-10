@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Pomodoro 55/5</title>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --purple: #9b59b6;
+      --bg: #ffffff;
+      --text: #000000;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    html, body {
+      height: 100%;
+      width: 100%;
+    }
+
+    body {
+      font-family: 'Proxima Nova', Proxima Nova;
+      background: var(--bg);
+      color: var(--text);
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .container {
+      background: rgba(255, 255, 255, 0.1);
+      padding: 40px 30px;
+      border-radius: 20px;
+      box-shadow: 0 0 20px rgba(0, 0, 0, 0.2);
+      text-align: center;
+      max-width: 600px;
+      width: 90%;
+      height: 80%;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      backdrop-filter: blur(5px);
+    }
+
+    .mode-display {
+      font-size: 2.5rem;  /* Increase size */
+      margin-bottom: 10px;
+      color: var(--purple);
+      font-weight: bold;
+      text-shadow: 0 0 4px rgba(0, 0, 0, 0.2);
+    }
+
+    .countdown {
+      font-size: 6rem;  /* Increase size */
+      font-weight: bold;
+      margin: 20px 0;
+      color: var(--text);
+      text-shadow: 0 0 8px rgba(0, 0, 0, 0.2);
+    }
+
+    .countdown.blink {
+      animation: blink-animation 1s steps(2, start) infinite;
+    }
+
+    @keyframes blink-animation {
+      to {
+        visibility: hidden;
+      }
+    }
+
+    .buttons {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 15px;
+      justify-content: center;
+      margin-top: 20px;
+    }
+
+    button {
+      background: var(--purple);
+      color: white;
+      border: none;
+      padding: 15px 20px;
+      border-radius: 10px;
+      cursor: pointer;
+      font-size: 1.2rem;
+      transition: 0.2s ease;
+      box-shadow: 0 0 6px #9b59b633;
+    }
+
+    button:hover {
+      background: #8e44ad;
+      box-shadow: 0 0 10px #8e44ad66;
+    }
+
+    button:active {
+      transform: scale(0.98);
+    }
+
+    .footer {
+      margin-top: 30px;
+      font-size: 1rem;
+      opacity: 0.6;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="mode-display" id="mode-display">Wake up to reality</div>
+    <div class="countdown" id="countdown">55:00</div>
+    <div class="buttons" id="button-container">
+      <button onclick="pauseTimer()">Pause</button>
+      <button onclick="resumeTimer()">Resume</button>
+      <button onclick="restartTimer()">Restart</button>
+      <button onclick="adjustTime(5)">+5 Min</button>
+      <button onclick="adjustTime(-5)">-5 Min</button>
+      <button onclick="stopBeepSound()">Stop Sound</button>
+    </div>
+    <div class="footer">&copy; KH Partho</div>
+  </div>
+
+  <script>
+    let totalTime = 55 * 60;
+    let timerInterval;
+    let isPaused = false;
+    let beepInterval;
+    let audioCtx;
+    let oscillator;
+    let isForceTime = true;
+
+    function updateCountdownDisplay() {
+      const minutes = Math.floor(totalTime / 60);
+      const seconds = totalTime % 60;
+      document.getElementById('countdown').textContent = `${minutes}:${seconds.toString().padStart(2, '0')}`;
+    }
+
+    function startTimer() {
+      clearInterval(timerInterval);
+      timerInterval = setInterval(() => {
+        if (!isPaused && totalTime > 0) {
+          totalTime--;
+          updateCountdownDisplay();
+        }
+
+        if (totalTime === 0) {
+          clearInterval(timerInterval);
+          handleTimerCompletion();
+        }
+      }, 1000);
+    }
+
+    function handleTimerCompletion() {
+      const modeDisplay = document.getElementById('mode-display');
+      const countdown = document.getElementById('countdown');
+
+      if (isForceTime) {
+        modeDisplay.textContent = "Break Time!";
+        countdown.textContent = "Take a break!";
+        totalTime = 55 * 60;
+      } else {
+        modeDisplay.textContent = "Force Time";
+        countdown.textContent = "Back to work!";
+        totalTime = 55 * 60;
+      }
+
+      countdown.classList.add('blink');
+      startBeepSound(10);
+
+      setTimeout(() => {
+        stopBeepSound();
+        countdown.classList.remove('blink');
+        isForceTime = !isForceTime;
+        updateCountdownDisplay();
+        startTimer();
+      }, 10000);
+    }
+
+    function pauseTimer() {
+      isPaused = true;
+    }
+
+    function resumeTimer() {
+      isPaused = false;
+    }
+
+    function restartTimer() {
+      isForceTime = true;
+      totalTime = 55 * 60;
+      isPaused = false;
+      document.getElementById('countdown').classList.remove('blink');
+      document.getElementById('mode-display').textContent = "Force Time";
+      updateCountdownDisplay();
+      stopBeepSound();
+    }
+
+    function adjustTime(amount, unit = 'min') {
+      if (unit === 'sec') {
+        totalTime += amount;
+      } else {
+        totalTime += amount * 60;
+      }
+      if (totalTime < 0) totalTime = 0;
+      updateCountdownDisplay();
+    }
+
+    function startBeepSound(durationSeconds) {
+      if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+
+      function playBeep() {
+        oscillator = audioCtx.createOscillator();
+        oscillator.type = 'sine';
+        oscillator.frequency.setValueAtTime(1000, audioCtx.currentTime);
+        oscillator.connect(audioCtx.destination);
+        oscillator.start();
+        oscillator.stop(audioCtx.currentTime + 0.1);
+      }
+
+      beepInterval = setInterval(playBeep, 1000);
+      setTimeout(stopBeepSound, durationSeconds * 1000);
+    }
+
+    function stopBeepSound() {
+      clearInterval(beepInterval);
+      if (oscillator) {
+        oscillator.disconnect();
+      }
+    }
+
+    window.onload = () => {
+      updateCountdownDisplay();
+      startTimer();
+    };
+  </script>
+</body>
+</html>
