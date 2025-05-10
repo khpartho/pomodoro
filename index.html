@@ -28,17 +28,7 @@
       align-items: center;
       justify-content: center;
     }
-    #bd-clock {
-      position: absolute;
-      top: 20px;
-      left: 50%;
-      transform: translateX(-50%);
-      font-size: 1.5rem;
-      font-weight: bold;
-      color: var(--purple);
-      text-shadow: 0 0 4px rgba(0, 0, 0, 0.2);
-    }
-    .container {
+    .container { font-family: 'Proxima Nova', Proxima Nova;
       background: rgba(255, 255, 255, 0.1);
       padding: 40px 30px;
       border-radius: 20px;
@@ -46,27 +36,34 @@
       text-align: center;
       max-width: 600px;
       width: 90%;
-      height: 80%;
+      height: auto;
       display: flex;
       flex-direction: column;
       justify-content: center;
       backdrop-filter: blur(5px);
     }
-    .mode-display {
+    #bd-clock { font-family: 'Proxima Nova', Proxima Nova;
+      font-size: 1.5rem;
+      font-weight: bold;
+      color: var(--purple);
+      text-shadow: 0 0 4px rgba(0, 0, 0, 0.2);
+      margin-bottom: 10px;
+    }
+    .mode-display { font-family: 'Proxima Nova', Proxima Nova;
       font-size: 2.5rem;
       margin-bottom: 10px;
       color: var(--purple);
       font-weight: bold;
       text-shadow: 0 0 4px rgba(0, 0, 0, 0.2);
     }
-    .countdown {
+    .countdown { font-family: 'Proxima Nova', Proxima Nova;
       font-size: 6rem;
       font-weight: bold;
       margin: 20px 0;
       color: var(--text);
       text-shadow: 0 0 8px rgba(0, 0, 0, 0.2);
     }
-    .countdown.blink {
+    .countdown.blink { font-family: 'Proxima Nova', Proxima Nova;
       animation: blink-animation 1s steps(2, start) infinite;
     }
     @keyframes blink-animation {
@@ -74,14 +71,14 @@
         visibility: hidden;
       }
     }
-    .buttons {
+    .buttons { font-family: 'Proxima Nova', Proxima Nova;
       display: flex;
       flex-wrap: wrap;
       gap: 15px;
       justify-content: center;
       margin-top: 20px;
     }
-    button {
+    button { font-family: 'Proxima Nova', Proxima Nova;
       background: var(--purple);
       color: white;
       border: none;
@@ -108,9 +105,8 @@
 </head>
 <body>
 
-  <div id="bd-clock">Loading BD time...</div>
-
   <div class="container">
+    <div id="bd-clock">Loading BD time...</div>
     <div class="mode-display" id="mode-display">Wake up to reality</div>
     <div class="countdown" id="countdown">55:00</div>
     <div class="buttons" id="button-container">
@@ -192,7 +188,7 @@
       document.getElementById('mode-display').textContent = "Force Time";
       updateCountdownDisplay();
       stopBeepSound();
-      startTimer(); // Fix: restart should restart
+      startTimer();
     }
 
     function adjustTime(amount, unit = 'min') {
