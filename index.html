@@ -4,37 +4,40 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Focus Timer 55/10</title>
-  
   <style>
     :root {
       --purple: #9932cc;
-      --bg: #e6e6fa  ;
+      --bg: #e6e6fa;
       --text: black;
     }
-
     * {
       box-sizing: border-box;
       margin: 0;
       padding: 0;
     }
-
     html, body {
       font-family: 'Proxima Nova', Proxima Nova;
       height: 100%;
       width: 100%;
     }
-
     body {
-      font-family: 'Proxima Nova', Proxima Nova;
       background: var(--bg);
       color: var(--text);
-      height: 100%;
       display: flex;
       flex-direction: column;
       align-items: center;
       justify-content: center;
     }
-
+    #bd-clock {
+      position: absolute;
+      top: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+      font-size: 1.5rem;
+      font-weight: bold;
+      color: var(--purple);
+      text-shadow: 0 0 4px rgba(0, 0, 0, 0.2);
+    }
     .container {
       background: rgba(255, 255, 255, 0.1);
       padding: 40px 30px;
@@ -49,44 +52,36 @@
       justify-content: center;
       backdrop-filter: blur(5px);
     }
-
     .mode-display {
-      font-size: 2.5rem;  /* Increase size */
+      font-size: 2.5rem;
       margin-bottom: 10px;
       color: var(--purple);
       font-weight: bold;
       text-shadow: 0 0 4px rgba(0, 0, 0, 0.2);
     }
-
     .countdown {
-      font-size: 6rem;  /* Increase size */
+      font-size: 6rem;
       font-weight: bold;
       margin: 20px 0;
       color: var(--text);
       text-shadow: 0 0 8px rgba(0, 0, 0, 0.2);
     }
-
     .countdown.blink {
       animation: blink-animation 1s steps(2, start) infinite;
     }
-
     @keyframes blink-animation {
       to {
         visibility: hidden;
       }
     }
-
     .buttons {
-      font-family: 'Proxima Nova', Proxima Nova;
       display: flex;
       flex-wrap: wrap;
       gap: 15px;
       justify-content: center;
       margin-top: 20px;
     }
-
     button {
-      font-family: 'Proxima Nova', Proxima Nova;
       background: var(--purple);
       color: white;
       border: none;
@@ -97,16 +92,13 @@
       transition: 0.2s ease;
       box-shadow: 0 0 6px #9b59b633;
     }
-
     button:hover {
       background: #8e44ad;
       box-shadow: 0 0 10px #8e44ad66;
     }
-
     button:active {
       transform: scale(0.98);
     }
-
     .footer {
       margin-top: 30px;
       font-size: 1rem;
@@ -115,6 +107,9 @@
   </style>
 </head>
 <body>
+
+  <div id="bd-clock">Loading BD time...</div>
+
   <div class="container">
     <div class="mode-display" id="mode-display">Wake up to reality</div>
     <div class="countdown" id="countdown">55:00</div>
@@ -151,7 +146,6 @@
           totalTime--;
           updateCountdownDisplay();
         }
-
         if (totalTime === 0) {
           clearInterval(timerInterval);
           handleTimerCompletion();
@@ -162,7 +156,6 @@
     function handleTimerCompletion() {
       const modeDisplay = document.getElementById('mode-display');
       const countdown = document.getElementById('countdown');
-
       if (isForceTime) {
         modeDisplay.textContent = "Break Time!";
         countdown.textContent = "Take a break!";
@@ -172,10 +165,8 @@
         countdown.textContent = "Back to work!";
         totalTime = 50 * 60;
       }
-
       countdown.classList.add('blink');
       startBeepSound(10);
-
       setTimeout(() => {
         stopBeepSound();
         countdown.classList.remove('blink');
@@ -201,6 +192,7 @@
       document.getElementById('mode-display').textContent = "Force Time";
       updateCountdownDisplay();
       stopBeepSound();
+      startTimer(); // Fix: restart should restart
     }
 
     function adjustTime(amount, unit = 'min') {
@@ -215,7 +207,6 @@
 
     function startBeepSound(durationSeconds) {
       if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-
       function playBeep() {
         oscillator = audioCtx.createOscillator();
         oscillator.type = 'sine';
@@ -224,7 +215,6 @@
         oscillator.start();
         oscillator.stop(audioCtx.currentTime + 0.1);
       }
-
       beepInterval = setInterval(playBeep, 1000);
       setTimeout(stopBeepSound, durationSeconds * 1000);
     }
@@ -236,9 +226,24 @@
       }
     }
 
+    function updateBangladeshClock() {
+      const bdClockEl = document.getElementById('bd-clock');
+      const options = {
+        timeZone: 'Asia/Dhaka',
+        hour: '2-digit',
+        minute: '2-digit',
+        second: '2-digit',
+        hour12: true
+      };
+      const bangladeshTime = new Date().toLocaleTimeString('en-US', options);
+      bdClockEl.textContent = bangladeshTime;
+    }
+
     window.onload = () => {
       updateCountdownDisplay();
       startTimer();
+      updateBangladeshClock();
+      setInterval(updateBangladeshClock, 1000);
     };
   </script>
 </body>
