@@ -74,25 +74,6 @@
 </head>
 <body class="bg-slate-100 text-slate-800">
 
-    <div id="authContainer" class="fixed top-2 right-2 bg-white p-3 rounded-lg shadow-md text-xs z-50 flex flex-col space-y-2 items-end">
-        <div class="text-right">
-            Auth Status: <span id="authStatus" class="font-semibold">Loading...</span><br>
-            User ID: <span id="userIdDisplay" class="font-semibold">N/A</span>
-        </div>
-        
-        <button id="loginWithGoogleButton" class="bg-blue-500 hover:bg-blue-600 text-white py-2 px-3 rounded-md text-sm font-medium hidden">
-            Login with Google
-        </button>
-        
-        <div id="userInfo" class="hidden text-right">
-            <p class="text-sm">Welcome, <span id="userName" class="font-semibold">User</span>!</p>
-            <img id="userPhoto" src="" alt="User Photo" class="rounded-full h-8 w-8 my-1 ml-auto hidden">
-            <button id="logoutButton" class="bg-red-500 hover:bg-red-600 text-white py-1 px-3 rounded-md text-xs font-medium">
-                Logout
-            </button>
-        </div>
-    </div>
-
     <div class="container mx-auto p-4 min-h-screen flex flex-col">
         <header class="mb-8 text-center">
             <h1 class="text-4xl font-bold text-blue-600">Smart Study Tool</h1>
@@ -178,7 +159,6 @@
     <script type="module">
         // Firebase SDK imports
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-        import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged, setPersistence, browserLocalPersistence, GoogleAuthProvider, signInWithPopup, signOut } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
         import { getFirestore, doc, getDoc, setDoc, addDoc, deleteDoc, onSnapshot, collection, query, updateDoc, serverTimestamp, writeBatch } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
         import { getAnalytics } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-analytics.js";
 
@@ -188,21 +168,17 @@
 
         // --- Firebase Initialization ---
         let app;
-        let auth;
         let db;
         let analytics;
-        let currentUserId = null; 
+        let currentUserId = "smart_study_user"; // Set a static ID for non-authenticated use
 
         try {
             app = initializeApp(firebaseConfig);
-            auth = getAuth(app);
             db = getFirestore(app);
             analytics = getAnalytics(app); 
             console.log("Firebase initialized successfully.");
         } catch (error) {
             console.error("Firebase initialization error:", error);
-            const authStatusEl = document.getElementById('authStatus');
-            if(authStatusEl) authStatusEl.textContent = 'Firebase Init Failed';
         }
         
         // --- Custom Modal Functions ---
@@ -270,10 +246,6 @@
         const taskList = document.getElementById('taskList');
 
         window.addTask = async function() {
-            if (!currentUserId) {
-                showModal("Please log in first to add tasks.");
-                return;
-            }
             const taskText = taskInput.value.trim();
             if (taskText === "") {
                 showModal("Task description cannot be empty.");
@@ -327,7 +299,7 @@
         }
 
         async function loadTasks() {
-            if (!currentUserId || !taskList) return;
+            if (!taskList) return;
             const todosCollectionPath = getTodosCollectionPath();
             const q = query(collection(db, todosCollectionPath)); 
             
@@ -349,7 +321,6 @@
         }
 
         window.toggleTask = async function(taskId, completedStatus) {
-            if (!currentUserId) return;
             const taskDocRef = doc(db, getTodosCollectionPath(), taskId);
             try {
                 await updateDoc(taskDocRef, { completed: completedStatus });
@@ -361,7 +332,6 @@
         }
 
         window.deleteTask = async function(taskId) {
-            if (!currentUserId) return;
             const taskDocRef = doc(db, getTodosCollectionPath(), taskId);
             try {
                 await deleteDoc(taskDocRef);
@@ -376,7 +346,6 @@
         const timerDisplay = document.getElementById('timerDisplay');
         const startButton = document.getElementById('startButton');
         const pauseButton = document.getElementById('pauseButton');
-        // resetButton is already declared in HTML, but ensure it's used here
         const studyTimeInput = document.getElementById('studyTime');
         const breakTimeInput = document.getElementById('breakTime');
         const longBreakTimeInput = document.getElementById('longBreakTime');
@@ -500,10 +469,6 @@
         const notesStatus = document.getElementById('notesStatus');
 
         window.saveNotes = async function() {
-            if (!currentUserId) {
-                showModal("Please log in to save notes.");
-                return;
-            }
             if (!notesTextarea) return;
             const notesContent = notesTextarea.value;
             const notesDocRef = doc(db, getNotesDocPath());
@@ -523,7 +488,7 @@
         }
 
         async function loadNotes() {
-            if (!currentUserId || !notesTextarea) return;
+            if (!notesTextarea) return;
             const notesDocRef = doc(db, getNotesDocPath());
             
             onSnapshot(notesDocRef, (docSnap) => {
@@ -559,10 +524,6 @@
         const linksList = document.getElementById('linksList');
 
         window.addLink = async function() {
-            if (!currentUserId) {
-                showModal("Please log in to add links.");
-                return;
-            }
             if (!linkUrlInput || !linkDescInput) return;
 
             const url = linkUrlInput.value.trim();
@@ -627,7 +588,7 @@
         }
         
         async function loadLinks() {
-            if (!currentUserId || !linksList) return;
+            if (!linksList) return;
             const linksCollectionPath = getLinksCollectionPath();
             const q = query(collection(db, linksCollectionPath)); 
 
@@ -649,7 +610,6 @@
         }
 
         window.deleteLink = async function(linkId) {
-            if (!currentUserId) return;
             const linkDocRef = doc(db, getLinksCollectionPath(), linkId);
             try {
                 await deleteDoc(linkDocRef);
@@ -657,37 +617,6 @@
             } catch (error) {
                 console.error("Error deleting link: ", error);
                 showModal("Error deleting link: " + error.message);
-            }
-        }
-
-        // --- Google Sign-In Function ---
-        window.handleGoogleLogin = async function() {
-            const provider = new GoogleAuthProvider();
-            try {
-                await setPersistence(auth, browserLocalPersistence); 
-                const result = await signInWithPopup(auth, provider);
-                const user = result.user;
-                console.log("Google Sign-In successful for user:", user.displayName);
-                showModal(`Welcome, ${user.displayName}! You have successfully logged in.`);
-            } catch (error) {
-                console.error("Google Sign-In error:", error);
-                if (error.code === 'auth/popup-closed-by-user') {
-                    showModal("Login process cancelled by user.");
-                } else {
-                    showModal("Error signing in with Google: " + error.message);
-                }
-            }
-        }
-
-        // --- Logout Function ---
-        window.handleLogout = async function() {
-            try {
-                await signOut(auth);
-                console.log("User signed out successfully.");
-                showModal("You have successfully logged out.");
-            } catch (error) {
-                console.error("Sign out error:", error);
-                showModal("Error signing out: " + error.message);
             }
         }
 
@@ -701,96 +630,15 @@
             console.log("UI data cleared.");
         }
 
-        // --- Authentication State Change Listener ---
-        onAuthStateChanged(auth, async (user) => {
-            const loginWithGoogleButton = document.getElementById('loginWithGoogleButton');
-            const userInfoDiv = document.getElementById('userInfo');
-            const userNameSpan = document.getElementById('userName');
-            const userPhotoImg = document.getElementById('userPhoto');
-            const authStatusSpan = document.getElementById('authStatus');
-            const userIdDisplaySpan = document.getElementById('userIdDisplay');
-
-            // Ensure all UI elements exist before manipulating them
-            if (!loginWithGoogleButton || !userInfoDiv || !userNameSpan || !userPhotoImg || !authStatusSpan || !userIdDisplaySpan) {
-                console.error("One or more authentication UI elements are missing from the DOM.");
-                return;
-            }
-
-            if (user) { 
-                currentUserId = user.uid;
-                userIdDisplaySpan.textContent = currentUserId.substring(0, 10) + "..."; 
-
-                if (user.displayName) { 
-                    authStatusSpan.textContent = `Authenticated (${user.displayName})`;
-                    userNameSpan.textContent = user.displayName;
-                    if (user.photoURL) {
-                        userPhotoImg.src = user.photoURL;
-                        userPhotoImg.classList.remove('hidden');
-                    } else {
-                        userPhotoImg.classList.add('hidden');
-                    }
-                } else if (user.isAnonymous) { 
-                    authStatusSpan.textContent = 'Authenticated (Anonymous)';
-                    userNameSpan.textContent = 'Anonymous User';
-                    userPhotoImg.classList.add('hidden');
-                } else { 
-                    authStatusSpan.textContent = 'Authenticated (User)';
-                    userNameSpan.textContent = 'User';
-                    userPhotoImg.classList.add('hidden');
-                }
-                
-                userInfoDiv.classList.remove('hidden');
-                loginWithGoogleButton.classList.add('hidden'); 
-                console.log("User authenticated. UID:", currentUserId, "Name:", user.displayName || (user.isAnonymous ? "Anonymous" : "N/A"));
-                loadTasks();
-                loadNotes();
-                loadLinks();
-
-            } else { 
-                currentUserId = null;
-                authStatusSpan.textContent = 'Not Authenticated';
-                userIdDisplaySpan.textContent = 'N/A';
-                
-                userInfoDiv.classList.add('hidden'); 
-                loginWithGoogleButton.classList.remove('hidden'); 
-                
-                clearAllData(); 
-                console.log("User logged out or not authenticated. Showing Google Login button.");
-
-                if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token && !auth.currentUser) {
-                     console.log("Attempting sign in with custom token as no user is active.");
-                     try {
-                         await setPersistence(auth, browserLocalPersistence);
-                         await signInWithCustomToken(auth, __initial_auth_token);
-                     } catch (error) {
-                         console.error("Error during initial custom token sign-in:", error);
-                         showModal("Error signing in with custom token: " + error.message.substring(0, 50) + "...");
-                     }
-                }
-            }
-        });
-
-        // --- Event Listeners for Auth Buttons ---
-        const loginBtnGlobal = document.getElementById('loginWithGoogleButton');
-        if (loginBtnGlobal) {
-            loginBtnGlobal.addEventListener('click', handleGoogleLogin);
-        } else {
-            console.error("Login with Google button not found for event listener attachment.");
-        }
-
-        const logoutBtnGlobal = document.getElementById('logoutButton');
-        if (logoutBtnGlobal) {
-            logoutBtnGlobal.addEventListener('click', handleLogout);
-        } else {
-            console.error("Logout button not found for event listener attachment.");
-        }
-
         // --- Footer Year ---
         const currentYearEl = document.getElementById('currentYear');
         if (currentYearEl) currentYearEl.textContent = new Date().getFullYear();
 
         // --- Initial Load ---
         showTab('todo'); 
+        loadTasks();
+        loadNotes();
+        loadLinks();
         
         // --- Global error handler ---
         window.addEventListener('unhandledrejection', function(event) {
