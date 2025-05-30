@@ -1,246 +1,803 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Focus Timer 55/10</title>
-  <style>
-    :root {
-      --purple: #9932cc;
-      --bg: #e6e6fa;
-      --text: black;
-    }
-    * {
-      box-sizing: border-box;
-      margin: 0;
-      padding: 0;
-    }
-    html, body {
-      font-family: 'Proxima Nova', Proxima Nova;
-      height: 100%;
-      width: 100%;
-    }
-    body {
-      background: var(--bg);
-      color: var(--text);
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-    }
-    .container { font-family: 'Proxima Nova', Proxima Nova;
-      background: rgba(255, 255, 255, 0.1);
-      padding: 40px 30px;
-      border-radius: 20px;
-      box-shadow: 0 0 20px rgba(0, 0, 0, 0.2);
-      text-align: center;
-      max-width: 600px;
-      width: 90%;
-      height: auto;
-      display: flex;
-      flex-direction: column;
-      justify-content: center;
-      backdrop-filter: blur(5px);
-    }
-    #bd-clock { font-family: 'Proxima Nova', Proxima Nova;
-      font-size: 1.5rem;
-      font-weight: bold;
-      color: var(--purple);
-      text-shadow: 0 0 4px rgba(0, 0, 0, 0.2);
-      margin-bottom: 10px;
-    }
-    .mode-display { font-family: 'Proxima Nova', Proxima Nova;
-      font-size: 2.5rem;
-      margin-bottom: 10px;
-      color: var(--purple);
-      font-weight: bold;
-      text-shadow: 0 0 4px rgba(0, 0, 0, 0.2);
-    }
-    .countdown { font-family: 'Proxima Nova', Proxima Nova;
-      font-size: 6rem;
-      font-weight: bold;
-      margin: 20px 0;
-      color: var(--text);
-      text-shadow: 0 0 8px rgba(0, 0, 0, 0.2);
-    }
-    .countdown.blink { font-family: 'Proxima Nova', Proxima Nova;
-      animation: blink-animation 1s steps(2, start) infinite;
-    }
-    @keyframes blink-animation {
-      to {
-        visibility: hidden;
-      }
-    }
-    .buttons { font-family: 'Proxima Nova', Proxima Nova;
-      display: flex;
-      flex-wrap: wrap;
-      gap: 15px;
-      justify-content: center;
-      margin-top: 20px;
-    }
-    button { font-family: 'Proxima Nova', Proxima Nova;
-      background: var(--purple);
-      color: white;
-      border: none;
-      padding: 15px 20px;
-      border-radius: 10px;
-      cursor: pointer;
-      font-size: 1.2rem;
-      transition: 0.2s ease;
-      box-shadow: 0 0 6px #9b59b633;
-    }
-    button:hover {
-      background: #8e44ad;
-      box-shadow: 0 0 10px #8e44ad66;
-    }
-    button:active {
-      transform: scale(0.98);
-    }
-    .footer {
-      margin-top: 30px;
-      font-size: 1rem;
-      opacity: 0.6;
-    }
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Smart Study Tool</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.8.49/Tone.js"></script>
+    <style>
+        body {
+            font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
+            background-color: #f0f4f8; /* Light blue-gray background */
+        }
+        .tab-button {
+            transition: all 0.3s ease;
+        }
+        .tab-button.active {
+            border-color: #3b82f6; /* Blue-500 */
+            background-color: #3b82f6;
+            color: white;
+        }
+        .task-item.completed span {
+            text-decoration: line-through;
+            color: #9ca3af; /* Gray-400 */
+        }
+        #notesTextarea::-webkit-scrollbar {
+            width: 8px;
+        }
+        #notesTextarea::-webkit-scrollbar-track {
+            background: #e5e7eb; /* Gray-200 */
+            border-radius: 10px;
+        }
+        #notesTextarea::-webkit-scrollbar-thumb {
+            background: #9ca3af; /* Gray-400 */
+            border-radius: 10px;
+        }
+        #notesTextarea::-webkit-scrollbar-thumb:hover {
+            background: #6b7280; /* Gray-500 */
+        }
+        .modal {
+            display: none; /* Hidden by default */
+            position: fixed; /* Stay in place */
+            z-index: 100; /* Sit on top */
+            left: 0;
+            top: 0;
+            width: 100%; /* Full width */
+            height: 100%; /* Full height */
+            overflow: auto; /* Enable scroll if needed */
+            background-color: rgba(0,0,0,0.4); /* Black w/ opacity */
+        }
+        .modal-content {
+            background-color: #fefefe;
+            margin: 15% auto; /* 15% from the top and centered */
+            padding: 20px;
+            border: 1px solid #888;
+            width: 80%; /* Could be more or less, depending on screen size */
+            max-width: 500px;
+            border-radius: 8px;
+            text-align: center;
+        }
+        .close-button {
+            color: #aaa;
+            float: right;
+            font-size: 28px;
+            font-weight: bold;
+        }
+        .close-button:hover,
+        .close-button:focus {
+            color: black;
+            text-decoration: none;
+            cursor: pointer;
+        }
+    </style>
 </head>
-<body>
+<body class="bg-slate-100 text-slate-800">
 
-  <div class="container">
-    <div id="bd-clock">Loading BD time...</div>
-    <div class="mode-display" id="mode-display">Wake up to reality</div>
-    <div class="countdown" id="countdown">55:00</div>
-    <div class="buttons" id="button-container">
-      <button onclick="pauseTimer()">Pause</button>
-      <button onclick="resumeTimer()">Resume</button>
-      <button onclick="restartTimer()">Restart</button>
-      <button onclick="adjustTime(5)">+5 Min</button>
-      <button onclick="adjustTime(-5)">-5 Min</button>
-      <button onclick="stopBeepSound()">Stop Sound</button>
+    <div id="authContainer" class="fixed top-2 right-2 bg-white p-3 rounded-lg shadow-md text-xs z-50 flex flex-col space-y-2 items-end">
+        <div class="text-right">
+            Auth Status: <span id="authStatus" class="font-semibold">Loading...</span><br>
+            User ID: <span id="userIdDisplay" class="font-semibold">N/A</span>
+        </div>
+        
+        <button id="loginWithGoogleButton" class="bg-blue-500 hover:bg-blue-600 text-white py-2 px-3 rounded-md text-sm font-medium hidden">
+            Login with Google
+        </button>
+        
+        <div id="userInfo" class="hidden text-right">
+            <p class="text-sm">Welcome, <span id="userName" class="font-semibold">User</span>!</p>
+            <img id="userPhoto" src="" alt="User Photo" class="rounded-full h-8 w-8 my-1 ml-auto hidden">
+            <button id="logoutButton" class="bg-red-500 hover:bg-red-600 text-white py-1 px-3 rounded-md text-xs font-medium">
+                Logout
+            </button>
+        </div>
     </div>
-    <div class="footer">&copy; KH Partho</div>
-  </div>
 
-  <script>
-    let totalTime = 50 * 60;
-    let timerInterval;
-    let isPaused = false;
-    let beepInterval;
-    let audioCtx;
-    let oscillator;
-    let isForceTime = true;
+    <div class="container mx-auto p-4 min-h-screen flex flex-col">
+        <header class="mb-8 text-center">
+            <h1 class="text-4xl font-bold text-blue-600">Smart Study Tool</h1>
+            <p class="text-slate-600">Make your studies easier and more effective</p>
+        </header>
 
-    function updateCountdownDisplay() {
-      const minutes = Math.floor(totalTime / 60);
-      const seconds = totalTime % 60;
-      document.getElementById('countdown').textContent = `${minutes}:${seconds.toString().padStart(2, '0')}`;
-    }
+        <div class="mb-6 flex justify-center space-x-2 sm:space-x-4 border-b-2 border-slate-300 pb-2">
+            <button data-tab-name="todo" class="tab-button active text-sm sm:text-base font-medium py-2 px-3 sm:px-6 rounded-t-lg border-b-2 border-transparent hover:bg-blue-100 hover:text-blue-700" onclick="showTab('todo', event)">To-Do List</button>
+            <button data-tab-name="pomodoro" class="tab-button text-sm sm:text-base font-medium py-2 px-3 sm:px-6 rounded-t-lg border-b-2 border-transparent hover:bg-blue-100 hover:text-blue-700" onclick="showTab('pomodoro', event)">Pomodoro Timer</button>
+            <button data-tab-name="notes" class="tab-button text-sm sm:text-base font-medium py-2 px-3 sm:px-6 rounded-t-lg border-b-2 border-transparent hover:bg-blue-100 hover:text-blue-700" onclick="showTab('notes', event)">Notes</button>
+            <button data-tab-name="links" class="tab-button text-sm sm:text-base font-medium py-2 px-3 sm:px-6 rounded-t-lg border-b-2 border-transparent hover:bg-blue-100 hover:text-blue-700" onclick="showTab('links', event)">Resource Links</button>
+        </div>
 
-    function startTimer() {
-      clearInterval(timerInterval);
-      timerInterval = setInterval(() => {
-        if (!isPaused && totalTime > 0) {
-          totalTime--;
-          updateCountdownDisplay();
+        <main class="flex-grow">
+            <div id="todo" class="tab-content p-4 bg-white rounded-xl shadow-lg">
+                <h2 class="text-2xl font-semibold mb-4 text-blue-700">My Tasks (To-Do List)</h2>
+                <div class="flex mb-4">
+                    <input type="text" id="taskInput" class="flex-grow p-3 border border-slate-300 rounded-l-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none" placeholder="Add a new task...">
+                    <button onclick="addTask()" class="bg-blue-500 hover:bg-blue-600 text-white p-3 rounded-r-lg font-semibold">Add Task</button>
+                </div>
+                <ul id="taskList" class="space-y-2">
+                    </ul>
+            </div>
+
+            <div id="pomodoro" class="tab-content hidden p-6 bg-white rounded-xl shadow-lg">
+                <h2 class="text-2xl font-semibold mb-6 text-center text-blue-700">Pomodoro Timer</h2>
+                <div class="text-6xl font-bold text-center mb-6 text-slate-700" id="timerDisplay">25:00</div>
+                <div class="flex justify-center space-x-3 mb-6">
+                    <button id="startButton" onclick="startTimer()" class="bg-green-500 hover:bg-green-600 text-white py-2 px-6 rounded-lg font-semibold">Start</button>
+                    <button id="pauseButton" onclick="pauseTimer()" class="bg-yellow-500 hover:bg-yellow-600 text-white py-2 px-6 rounded-lg font-semibold hidden">Pause</button>
+                    <button id="resetButton" onclick="resetTimer()" class="bg-red-500 hover:bg-red-600 text-white py-2 px-6 rounded-lg font-semibold">Reset</button>
+                </div>
+                <div class="flex flex-col sm:flex-row justify-center items-center space-y-4 sm:space-y-0 sm:space-x-4 mb-4">
+                    <div class="flex items-center space-x-2">
+                        <label for="studyTime" class="text-slate-600">Work Time (min):</label>
+                        <input type="number" id="studyTime" value="25" class="w-20 p-2 border border-slate-300 rounded-lg text-center focus:ring-2 focus:ring-blue-500">
+                    </div>
+                    <div class="flex items-center space-x-2">
+                        <label for="breakTime" class="text-slate-600">Short Break (min):</label>
+                        <input type="number" id="breakTime" value="5" class="w-20 p-2 border border-slate-300 rounded-lg text-center focus:ring-2 focus:ring-blue-500">
+                    </div>
+                     <div class="flex items-center space-x-2">
+                        <label for="longBreakTime" class="text-slate-600">Long Break (min):</label>
+                        <input type="number" id="longBreakTime" value="15" class="w-20 p-2 border border-slate-300 rounded-lg text-center focus:ring-2 focus:ring-blue-500">
+                    </div>
+                </div>
+                <p class="text-center text-sm text-slate-500">Pomodoros Completed: <span id="pomodoroCount">0</span></p>
+            </div>
+
+            <div id="notes" class="tab-content hidden p-6 bg-white rounded-xl shadow-lg">
+                <h2 class="text-2xl font-semibold mb-4 text-blue-700">My Notes</h2>
+                <textarea id="notesTextarea" class="w-full h-64 p-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none resize-none" placeholder="Write your notes here..."></textarea>
+                <button onclick="saveNotes()" class="mt-4 bg-blue-500 hover:bg-blue-600 text-white py-2 px-6 rounded-lg font-semibold">Save Notes</button>
+                <p id="notesStatus" class="text-sm text-green-600 mt-2"></p>
+            </div>
+
+            <div id="links" class="tab-content hidden p-6 bg-white rounded-xl shadow-lg">
+                <h2 class="text-2xl font-semibold mb-4 text-blue-700">Important Links</h2>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                    <input type="text" id="linkUrlInput" class="p-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none" placeholder="Link URL">
+                    <input type="text" id="linkDescInput" class="p-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none" placeholder="Link Description">
+                </div>
+                <button onclick="addLink()" class="bg-blue-500 hover:bg-blue-600 text-white py-2 px-6 rounded-lg font-semibold mb-4">Add Link</button>
+                <div id="linksList" class="space-y-3">
+                    </div>
+            </div>
+        </main>
+
+        <footer class="mt-12 text-center text-sm text-slate-500">
+            <p>&copy; <span id="currentYear"></span> Smart Study Tool. All rights reserved.</p>
+        </footer>
+    </div>
+
+    <div id="customModal" class="modal">
+        <div class="modal-content">
+            <span class="close-button" onclick="closeModal()">&times;</span>
+            <p id="modalMessageText" class="text-lg"></p>
+            <button id="modalOkButton" onclick="closeModal()" class="mt-4 bg-blue-500 hover:bg-blue-600 text-white py-2 px-6 rounded-lg">OK</button>
+        </div>
+    </div>
+
+
+    <script type="module">
+        // Firebase SDK imports
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged, setPersistence, browserLocalPersistence, GoogleAuthProvider, signInWithPopup, signOut } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, doc, getDoc, setDoc, addDoc, deleteDoc, onSnapshot, collection, query, updateDoc, serverTimestamp, writeBatch } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        import { getAnalytics } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-analytics.js";
+
+        // --- Configuration (Provided by Canvas Environment) ---
+        const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : { apiKey: "YOUR_API_KEY", authDomain: "YOUR_AUTH_DOMAIN", projectId: "YOUR_PROJECT_ID" }; 
+        const appId = typeof __app_id !== 'undefined' ? __app_id : 'smart-study-tool-default-en';
+
+        // --- Firebase Initialization ---
+        let app;
+        let auth;
+        let db;
+        let analytics;
+        let currentUserId = null; 
+
+        try {
+            app = initializeApp(firebaseConfig);
+            auth = getAuth(app);
+            db = getFirestore(app);
+            analytics = getAnalytics(app); 
+            console.log("Firebase initialized successfully.");
+        } catch (error) {
+            console.error("Firebase initialization error:", error);
+            const authStatusEl = document.getElementById('authStatus');
+            if(authStatusEl) authStatusEl.textContent = 'Firebase Init Failed';
         }
-        if (totalTime === 0) {
-          clearInterval(timerInterval);
-          handleTimerCompletion();
+        
+        // --- Custom Modal Functions ---
+        const modal = document.getElementById('customModal');
+        const modalMessageText = document.getElementById('modalMessageText');
+        
+        function showModal(message) {
+            if (modalMessageText && modal) {
+                modalMessageText.textContent = message;
+                modal.style.display = "block";
+            } else {
+                console.warn("Modal elements not found, falling back to alert:", message);
+                alert(message);
+            }
         }
-      }, 1000);
-    }
 
-    function handleTimerCompletion() {
-      const modeDisplay = document.getElementById('mode-display');
-      const countdown = document.getElementById('countdown');
-      if (isForceTime) {
-        modeDisplay.textContent = "Break Time!";
-        countdown.textContent = "Take a break!";
-        totalTime = 10 * 60;
-      } else {
-        modeDisplay.textContent = "Force Time";
-        countdown.textContent = "Back to work!";
-        totalTime = 50 * 60;
-      }
-      countdown.classList.add('blink');
-      startBeepSound(10);
-      setTimeout(() => {
-        stopBeepSound();
-        countdown.classList.remove('blink');
-        isForceTime = !isForceTime;
-        updateCountdownDisplay();
-        startTimer();
-      }, 10000);
-    }
+        window.closeModal = function() { 
+            if(modal) modal.style.display = "none";
+        }
+        window.onclick = function(event) {
+            if (event.target == modal) {
+                if(modal) modal.style.display = "none";
+            }
+        }
 
-    function pauseTimer() {
-      isPaused = true;
-    }
+        // --- Firestore Collection Paths ---
+        const getTodosCollectionPath = () => `artifacts/${appId}/users/${currentUserId}/todos`;
+        const getNotesDocPath = () => `artifacts/${appId}/users/${currentUserId}/userNotes/notesData`;
+        const getLinksCollectionPath = () => `artifacts/${appId}/users/${currentUserId}/resourceLinks`;
 
-    function resumeTimer() {
-      isPaused = false;
-    }
+        // --- Tab Navigation ---
+        window.showTab = function(tabName, event) {
+            const contents = document.querySelectorAll('.tab-content');
+            contents.forEach(content => content.classList.add('hidden'));
+            
+            const targetTabContent = document.getElementById(tabName);
+            if (targetTabContent) {
+                targetTabContent.classList.remove('hidden');
+            } else {
+                console.error(`Tab content with id '${tabName}' not found.`);
+            }
 
-    function restartTimer() {
-      isForceTime = true;
-      totalTime = 50 * 60;
-      isPaused = false;
-      document.getElementById('countdown').classList.remove('blink');
-      document.getElementById('mode-display').textContent = "Force Time";
-      updateCountdownDisplay();
-      stopBeepSound();
-      startTimer();
-    }
+            const buttons = document.querySelectorAll('.tab-button');
+            buttons.forEach(button => button.classList.remove('active'));
 
-    function adjustTime(amount, unit = 'min') {
-      if (unit === 'sec') {
-        totalTime += amount;
-      } else {
-        totalTime += amount * 60;
-      }
-      if (totalTime < 0) totalTime = 0;
-      updateCountdownDisplay();
-    }
+            let buttonToActivate;
+            if (event && event.currentTarget) {
+                buttonToActivate = event.currentTarget;
+            } else {
+                buttonToActivate = document.querySelector(`.tab-button[data-tab-name="${tabName}"]`);
+            }
 
-    function startBeepSound(durationSeconds) {
-      if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-      function playBeep() {
-        oscillator = audioCtx.createOscillator();
-        oscillator.type = 'sine';
-        oscillator.frequency.setValueAtTime(1000, audioCtx.currentTime);
-        oscillator.connect(audioCtx.destination);
-        oscillator.start();
-        oscillator.stop(audioCtx.currentTime + 0.1);
-      }
-      beepInterval = setInterval(playBeep, 1000);
-      setTimeout(stopBeepSound, durationSeconds * 1000);
-    }
+            if (buttonToActivate) {
+                buttonToActivate.classList.add('active');
+            } else {
+                console.error(`Button for tab '${tabName}' not found.`);
+                if (tabName === 'todo' && buttons.length > 0 && !document.querySelector('.tab-button.active')) {
+                    buttons[0].classList.add('active'); // Fallback for initial load
+                }
+            }
+        }
 
-    function stopBeepSound() {
-      clearInterval(beepInterval);
-      if (oscillator) {
-        oscillator.disconnect();
-      }
-    }
+        // --- To-Do List Functionality ---
+        const taskInput = document.getElementById('taskInput');
+        const taskList = document.getElementById('taskList');
 
-    function updateBangladeshClock() {
-      const bdClockEl = document.getElementById('bd-clock');
-      const options = {
-        timeZone: 'Asia/Dhaka',
-        hour: '2-digit',
-        minute: '2-digit',
-        second: '2-digit',
-        hour12: true
-      };
-      const bangladeshTime = new Date().toLocaleTimeString('en-US', options);
-      bdClockEl.textContent = bangladeshTime;
-    }
+        window.addTask = async function() {
+            if (!currentUserId) {
+                showModal("Please log in first to add tasks.");
+                return;
+            }
+            const taskText = taskInput.value.trim();
+            if (taskText === "") {
+                showModal("Task description cannot be empty.");
+                return;
+            }
 
-    window.onload = () => {
-      updateCountdownDisplay();
-      startTimer();
-      updateBangladeshClock();
-      setInterval(updateBangladeshClock, 1000);
-    };
-  </script>
+            try {
+                const todosCollectionRef = collection(db, getTodosCollectionPath());
+                await addDoc(todosCollectionRef, {
+                    text: taskText,
+                    completed: false,
+                    createdAt: serverTimestamp() 
+                });
+                taskInput.value = "";
+                console.log("Task added to Firestore.");
+            } catch (error) {
+                console.error("Error adding task to Firestore: ", error);
+                showModal("Error adding task: " + error.message);
+            }
+        }
+        
+        if(taskInput) {
+            taskInput.addEventListener('keypress', function(event) {
+                if (event.key === 'Enter') {
+                    addTask();
+                }
+            });
+        }
+
+
+        function renderTask(doc) {
+            const task = doc.data();
+            const taskId = doc.id;
+
+            const li = document.createElement('li');
+            li.className = `task-item flex justify-between items-center p-3 bg-slate-50 hover:bg-slate-100 rounded-lg shadow-sm ${task.completed ? 'completed' : ''}`;
+            li.setAttribute('data-id', taskId);
+
+            const taskSpan = document.createElement('span');
+            taskSpan.textContent = task.text;
+            taskSpan.className = "flex-grow cursor-pointer";
+            taskSpan.onclick = () => toggleTask(taskId, !task.completed);
+
+            const deleteButton = document.createElement('button');
+            deleteButton.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-red-500 hover:text-red-700" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clip-rule="evenodd" /></svg>`;
+            deleteButton.onclick = () => deleteTask(taskId);
+            
+            li.appendChild(taskSpan);
+            li.appendChild(deleteButton);
+            if(taskList) taskList.appendChild(li);
+        }
+
+        async function loadTasks() {
+            if (!currentUserId || !taskList) return;
+            const todosCollectionPath = getTodosCollectionPath();
+            const q = query(collection(db, todosCollectionPath)); 
+            
+            onSnapshot(q, (querySnapshot) => {
+                taskList.innerHTML = ""; 
+                const tasks = [];
+                querySnapshot.forEach((doc) => {
+                    tasks.push({ id: doc.id, ...doc.data() });
+                });
+                tasks.sort((a, b) => (b.createdAt && a.createdAt) ? b.createdAt.toMillis() - a.createdAt.toMillis() : 0);
+                tasks.forEach(taskDoc => {
+                    renderTask({ id: taskDoc.id, data: () => taskDoc });
+                });
+                console.log("Tasks loaded from Firestore.");
+            }, (error) => {
+                console.error("Error loading tasks: ", error);
+                showModal("Error loading tasks: " + error.message);
+            });
+        }
+
+        window.toggleTask = async function(taskId, completedStatus) {
+            if (!currentUserId) return;
+            const taskDocRef = doc(db, getTodosCollectionPath(), taskId);
+            try {
+                await updateDoc(taskDocRef, { completed: completedStatus });
+                console.log("Task status updated.");
+            } catch (error) {
+                console.error("Error updating task: ", error);
+                showModal("Error updating task status: " + error.message);
+            }
+        }
+
+        window.deleteTask = async function(taskId) {
+            if (!currentUserId) return;
+            const taskDocRef = doc(db, getTodosCollectionPath(), taskId);
+            try {
+                await deleteDoc(taskDocRef);
+                console.log("Task deleted.");
+            } catch (error) {
+                console.error("Error deleting task: ", error);
+                showModal("Error deleting task: " + error.message);
+            }
+        }
+
+        // --- Pomodoro Timer Functionality ---
+        const timerDisplay = document.getElementById('timerDisplay');
+        const startButton = document.getElementById('startButton');
+        const pauseButton = document.getElementById('pauseButton');
+        // resetButton is already declared in HTML, but ensure it's used here
+        const studyTimeInput = document.getElementById('studyTime');
+        const breakTimeInput = document.getElementById('breakTime');
+        const longBreakTimeInput = document.getElementById('longBreakTime');
+        const pomodoroCountDisplay = document.getElementById('pomodoroCount');
+
+        let timerInterval;
+        let timeLeft; 
+        let isStudySession = true;
+        let pomodorosCompleted = 0;
+        let currentTimerDuration;
+
+        function updateTimerDisplayDOM() {
+            if (!timerDisplay) return;
+            const minutes = Math.floor(timeLeft / 60);
+            const seconds = timeLeft % 60;
+            timerDisplay.textContent = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+        }
+
+        function playSound(type = "work") {
+            try {
+                const synth = new Tone.Synth().toDestination();
+                if (type === "work") { // Work session starting sound
+                    synth.triggerAttackRelease("C5", "8n", Tone.now());
+                    synth.triggerAttackRelease("E5", "8n", Tone.now() + 0.2);
+                    synth.triggerAttackRelease("G5", "8n", Tone.now() + 0.4);
+                } else { // Break session starting sound
+                    synth.triggerAttackRelease("G4", "8n", Tone.now());
+                    synth.triggerAttackRelease("C5", "8n", Tone.now() + 0.2);
+                    synth.triggerAttackRelease("E5", "8n", Tone.now() + 0.4);
+                }
+            } catch (err) {
+                console.warn("Tone.js sound could not be played:", err);
+                if (type === "work") showModal("Work session started!");
+                else showModal("Break time!");
+            }
+        }
+
+        window.startTimer = function() {
+            if (timerInterval) return; 
+
+            const workTime = parseInt(studyTimeInput.value);
+            const shortBreak = parseInt(breakTimeInput.value);
+            const longBreak = parseInt(longBreakTimeInput.value);
+
+            if (isStudySession) {
+                currentTimerDuration = workTime * 60;
+            } else {
+                currentTimerDuration = (pomodorosCompleted % 4 === 0 && pomodorosCompleted > 0) 
+                                     ? longBreak * 60 
+                                     : shortBreak * 60;
+            }
+            
+            if (isNaN(currentTimerDuration) || currentTimerDuration <= 0) {
+                showModal("Please set a valid time for the timer.");
+                return;
+            }
+            
+            if (!timeLeft || timeLeft <=0) { 
+                 timeLeft = currentTimerDuration;
+            }
+
+            updateTimerDisplayDOM(); 
+            playSound(isStudySession ? "work" : "break");
+
+            timerInterval = setInterval(() => {
+                timeLeft--;
+                updateTimerDisplayDOM();
+                if (timeLeft < 0) { // Changed from <=0 to <0 to ensure 00:00 is displayed
+                    clearInterval(timerInterval);
+                    timerInterval = null;
+                    if (isStudySession) {
+                        pomodorosCompleted++;
+                        if(pomodoroCountDisplay) pomodoroCountDisplay.textContent = pomodorosCompleted;
+                        showModal(`Great! ${pomodorosCompleted} Pomodoro(s) completed. Time for a break!`);
+                        isStudySession = false;
+                        if (pomodorosCompleted % 4 === 0) {
+                            timeLeft = parseInt(longBreakTimeInput.value) * 60;
+                            if(timerDisplay) timerDisplay.classList.add('text-green-500'); 
+                        } else {
+                            timeLeft = parseInt(breakTimeInput.value) * 60;
+                           if(timerDisplay) timerDisplay.classList.add('text-blue-500');
+                        }
+                    } else {
+                        showModal("Break's over. Time to focus again!");
+                        isStudySession = true;
+                        timeLeft = parseInt(studyTimeInput.value) * 60;
+                        if(timerDisplay) timerDisplay.classList.remove('text-green-500', 'text-blue-500');
+                    }
+                    startTimer(); // Auto-start next session
+                }
+            }, 1000);
+            if(startButton) startButton.classList.add('hidden');
+            if(pauseButton) pauseButton.classList.remove('hidden');
+        }
+
+        window.pauseTimer = function() {
+            clearInterval(timerInterval);
+            timerInterval = null;
+            if(startButton) startButton.classList.remove('hidden');
+            if(pauseButton) pauseButton.classList.add('hidden');
+        }
+
+        window.resetTimer = function() {
+            clearInterval(timerInterval);
+            timerInterval = null;
+            isStudySession = true;
+            if(studyTimeInput) timeLeft = parseInt(studyTimeInput.value) * 60;
+            else timeLeft = 25*60; // default
+            if (isNaN(timeLeft) || timeLeft <=0) timeLeft = 25 * 60; 
+            updateTimerDisplayDOM();
+            if(startButton) startButton.classList.remove('hidden');
+            if(pauseButton) pauseButton.classList.add('hidden');
+            if(timerDisplay) timerDisplay.classList.remove('text-green-500', 'text-blue-500');
+        }
+        
+        if(studyTimeInput) resetTimer();
+
+
+        // --- Notes Functionality ---
+        const notesTextarea = document.getElementById('notesTextarea');
+        const notesStatus = document.getElementById('notesStatus');
+
+        window.saveNotes = async function() {
+            if (!currentUserId) {
+                showModal("Please log in to save notes.");
+                return;
+            }
+            if (!notesTextarea) return;
+            const notesContent = notesTextarea.value;
+            const notesDocRef = doc(db, getNotesDocPath());
+            try {
+                await setDoc(notesDocRef, { 
+                    content: notesContent,
+                    lastUpdated: serverTimestamp()
+                });
+                if(notesStatus) notesStatus.textContent = "Notes saved successfully!";
+                console.log("Notes saved to Firestore.");
+                setTimeout(() => { if(notesStatus) notesStatus.textContent = "" }, 3000);
+            } catch (error) {
+                console.error("Error saving notes: ", error);
+                if(notesStatus) notesStatus.textContent = "Error saving notes.";
+                showModal("Error saving notes: " + error.message);
+            }
+        }
+
+        async function loadNotes() {
+            if (!currentUserId || !notesTextarea) return;
+            const notesDocRef = doc(db, getNotesDocPath());
+            
+            onSnapshot(notesDocRef, (docSnap) => {
+                if (docSnap.exists()) {
+                    notesTextarea.value = docSnap.data().content;
+                    console.log("Notes loaded from Firestore.");
+                } else {
+                    console.log("No notes found for this user.");
+                    notesTextarea.value = ""; 
+                }
+            }, (error) => {
+                console.error("Error loading notes: ", error);
+                showModal("Error loading notes: " + error.message);
+            });
+        }
+        
+        let noteSaveTimeout;
+        if(notesTextarea) {
+            notesTextarea.addEventListener('input', () => {
+                clearTimeout(noteSaveTimeout);
+                noteSaveTimeout = setTimeout(() => {
+                    if (notesTextarea.value.trim() !== "") { 
+                         saveNotes();
+                    }
+                }, 5000); 
+            });
+        }
+
+
+        // --- Resource Links Functionality ---
+        const linkUrlInput = document.getElementById('linkUrlInput');
+        const linkDescInput = document.getElementById('linkDescInput');
+        const linksList = document.getElementById('linksList');
+
+        window.addLink = async function() {
+            if (!currentUserId) {
+                showModal("Please log in to add links.");
+                return;
+            }
+            if (!linkUrlInput || !linkDescInput) return;
+
+            const url = linkUrlInput.value.trim();
+            const desc = linkDescInput.value.trim();
+
+            if (url === "" || desc === "") {
+                showModal("Please fill in both Link URL and Description.");
+                return;
+            }
+            try {
+                new URL(url); 
+            } catch (_) {
+                showModal("Please enter a valid URL.");
+                return;
+            }
+
+            try {
+                const linksCollectionRef = collection(db, getLinksCollectionPath());
+                await addDoc(linksCollectionRef, {
+                    url: url,
+                    description: desc,
+                    createdAt: serverTimestamp()
+                });
+                linkUrlInput.value = "";
+                linkDescInput.value = "";
+                console.log("Link added to Firestore.");
+            } catch (error) {
+                console.error("Error adding link to Firestore: ", error);
+                showModal("Error adding link: " + error.message);
+            }
+        }
+
+        function renderLink(doc) {
+            const link = doc.data();
+            const linkId = doc.id;
+
+            const div = document.createElement('div');
+            div.className = "p-3 bg-slate-50 rounded-lg shadow-sm flex justify-between items-center";
+            div.setAttribute('data-id', linkId);
+
+            const linkContent = document.createElement('div');
+            const a = document.createElement('a');
+            a.href = link.url;
+            a.textContent = link.description;
+            a.target = "_blank"; 
+            a.className = "text-blue-600 hover:underline font-medium break-all";
+            
+            const urlText = document.createElement('p');
+            urlText.textContent = link.url;
+            urlText.className = "text-xs text-slate-500 break-all";
+
+            linkContent.appendChild(a);
+            linkContent.appendChild(urlText);
+
+            const deleteButton = document.createElement('button');
+            deleteButton.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-red-500 hover:text-red-700 ml-2" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clip-rule="evenodd" /></svg>`;
+            deleteButton.onclick = () => deleteLink(linkId);
+            
+            div.appendChild(linkContent);
+            div.appendChild(deleteButton);
+            if(linksList) linksList.appendChild(div);
+        }
+        
+        async function loadLinks() {
+            if (!currentUserId || !linksList) return;
+            const linksCollectionPath = getLinksCollectionPath();
+            const q = query(collection(db, linksCollectionPath)); 
+
+            onSnapshot(q, (querySnapshot) => {
+                linksList.innerHTML = ""; 
+                const links = [];
+                querySnapshot.forEach((doc) => {
+                    links.push({ id: doc.id, ...doc.data() });
+                });
+                links.sort((a, b) => (b.createdAt && a.createdAt) ? b.createdAt.toMillis() - a.createdAt.toMillis() : 0);
+                links.forEach(linkDoc => {
+                     renderLink({ id: linkDoc.id, data: () => linkDoc });
+                });
+                console.log("Links loaded from Firestore.");
+            }, (error) => {
+                console.error("Error loading links: ", error);
+                showModal("Error loading links: " + error.message);
+            });
+        }
+
+        window.deleteLink = async function(linkId) {
+            if (!currentUserId) return;
+            const linkDocRef = doc(db, getLinksCollectionPath(), linkId);
+            try {
+                await deleteDoc(linkDocRef);
+                console.log("Link deleted.");
+            } catch (error) {
+                console.error("Error deleting link: ", error);
+                showModal("Error deleting link: " + error.message);
+            }
+        }
+
+        // --- Google Sign-In Function ---
+        window.handleGoogleLogin = async function() {
+            const provider = new GoogleAuthProvider();
+            try {
+                await setPersistence(auth, browserLocalPersistence); 
+                const result = await signInWithPopup(auth, provider);
+                const user = result.user;
+                console.log("Google Sign-In successful for user:", user.displayName);
+                showModal(`Welcome, ${user.displayName}! You have successfully logged in.`);
+            } catch (error) {
+                console.error("Google Sign-In error:", error);
+                if (error.code === 'auth/popup-closed-by-user') {
+                    showModal("Login process cancelled by user.");
+                } else {
+                    showModal("Error signing in with Google: " + error.message);
+                }
+            }
+        }
+
+        // --- Logout Function ---
+        window.handleLogout = async function() {
+            try {
+                await signOut(auth);
+                console.log("User signed out successfully.");
+                showModal("You have successfully logged out.");
+            } catch (error) {
+                console.error("Sign out error:", error);
+                showModal("Error signing out: " + error.message);
+            }
+        }
+
+        // --- Clear UI Data Function ---
+        function clearAllData() {
+            if (taskList) taskList.innerHTML = "";
+            if (notesTextarea) notesTextarea.value = "";
+            if (linksList) linksList.innerHTML = "";
+            if (pomodoroCountDisplay) pomodoroCountDisplay.textContent = "0";
+            resetTimer(); // Also reset timer display to default
+            console.log("UI data cleared.");
+        }
+
+        // --- Authentication State Change Listener ---
+        onAuthStateChanged(auth, async (user) => {
+            const loginWithGoogleButton = document.getElementById('loginWithGoogleButton');
+            const userInfoDiv = document.getElementById('userInfo');
+            const userNameSpan = document.getElementById('userName');
+            const userPhotoImg = document.getElementById('userPhoto');
+            const authStatusSpan = document.getElementById('authStatus');
+            const userIdDisplaySpan = document.getElementById('userIdDisplay');
+
+            // Ensure all UI elements exist before manipulating them
+            if (!loginWithGoogleButton || !userInfoDiv || !userNameSpan || !userPhotoImg || !authStatusSpan || !userIdDisplaySpan) {
+                console.error("One or more authentication UI elements are missing from the DOM.");
+                return;
+            }
+
+            if (user) { 
+                currentUserId = user.uid;
+                userIdDisplaySpan.textContent = currentUserId.substring(0, 10) + "..."; 
+
+                if (user.displayName) { 
+                    authStatusSpan.textContent = `Authenticated (${user.displayName})`;
+                    userNameSpan.textContent = user.displayName;
+                    if (user.photoURL) {
+                        userPhotoImg.src = user.photoURL;
+                        userPhotoImg.classList.remove('hidden');
+                    } else {
+                        userPhotoImg.classList.add('hidden');
+                    }
+                } else if (user.isAnonymous) { 
+                    authStatusSpan.textContent = 'Authenticated (Anonymous)';
+                    userNameSpan.textContent = 'Anonymous User';
+                    userPhotoImg.classList.add('hidden');
+                } else { 
+                    authStatusSpan.textContent = 'Authenticated (User)';
+                    userNameSpan.textContent = 'User';
+                    userPhotoImg.classList.add('hidden');
+                }
+                
+                userInfoDiv.classList.remove('hidden');
+                loginWithGoogleButton.classList.add('hidden'); 
+                console.log("User authenticated. UID:", currentUserId, "Name:", user.displayName || (user.isAnonymous ? "Anonymous" : "N/A"));
+                loadTasks();
+                loadNotes();
+                loadLinks();
+
+            } else { 
+                currentUserId = null;
+                authStatusSpan.textContent = 'Not Authenticated';
+                userIdDisplaySpan.textContent = 'N/A';
+                
+                userInfoDiv.classList.add('hidden'); 
+                loginWithGoogleButton.classList.remove('hidden'); 
+                
+                clearAllData(); 
+                console.log("User logged out or not authenticated. Showing Google Login button.");
+
+                if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token && !auth.currentUser) {
+                     console.log("Attempting sign in with custom token as no user is active.");
+                     try {
+                         await setPersistence(auth, browserLocalPersistence);
+                         await signInWithCustomToken(auth, __initial_auth_token);
+                     } catch (error) {
+                         console.error("Error during initial custom token sign-in:", error);
+                         showModal("Error signing in with custom token: " + error.message.substring(0, 50) + "...");
+                     }
+                }
+            }
+        });
+
+        // --- Event Listeners for Auth Buttons ---
+        const loginBtnGlobal = document.getElementById('loginWithGoogleButton');
+        if (loginBtnGlobal) {
+            loginBtnGlobal.addEventListener('click', handleGoogleLogin);
+        } else {
+            console.error("Login with Google button not found for event listener attachment.");
+        }
+
+        const logoutBtnGlobal = document.getElementById('logoutButton');
+        if (logoutBtnGlobal) {
+            logoutBtnGlobal.addEventListener('click', handleLogout);
+        } else {
+            console.error("Logout button not found for event listener attachment.");
+        }
+
+        // --- Footer Year ---
+        const currentYearEl = document.getElementById('currentYear');
+        if (currentYearEl) currentYearEl.textContent = new Date().getFullYear();
+
+        // --- Initial Load ---
+        showTab('todo'); 
+        
+        // --- Global error handler ---
+        window.addEventListener('unhandledrejection', function(event) {
+            console.error('Unhandled promise rejection:', event.reason);
+            showModal('An unexpected error occurred: ' + (event.reason && event.reason.message ? event.reason.message : String(event.reason)));
+        });
+
+    </script>
 </body>
 </html>
